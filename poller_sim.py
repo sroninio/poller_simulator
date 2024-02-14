@@ -69,6 +69,8 @@ class System(object):
         self.q = PriorityQueue()
         self.T = 0
         self.io_returned(None)
+        self.q.push(10000, 10000)
+        self.active_working_sets = []
 
     def get_curr_ns_advnace_if_needed(self):
         if (self.namespaces[self.active_namespace_indx].batches_sizes[-1] >= POLL_SIZE_FROM_NS) and  (self.curr_working_set_size < MAX_WORKING_SET_SIZE):
@@ -94,9 +96,14 @@ class System(object):
         completed_ios = 0
         while completed_ios < IOS_PASSED_TILL_COMPLETE:
             io = self.q.pop()
-            self.T = io.completion_time
-            self.io_returned(io)
-            completed_ios += 1
+            if isinstance(io, int):
+                self.T = io
+                self.active_working_sets.append(self.curr_working_set_size)
+                self.q.push(self.T + 10000, self.T + 10000)
+            else:
+                self.T = io.completion_time
+                self.io_returned(io)
+                completed_ios += 1
         print([(statistics.mean(ns.batches_sizes[0:-1]), statistics.stdev(ns.batches_sizes[0:-1]),len(ns.batches_sizes)) for ns in self.namespaces])
         import ipdb; ipdb.set_trace()
 
